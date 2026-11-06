@@ -1,7 +1,7 @@
 # STATE.md — Aegis Project State
 
-**Current phase:** 0 (Setup & audit) — COMPLETE
-**Last updated:** 2026-11-06 14:45
+**Current phase:** 1 (Core + keyboard) — COMPLETE
+**Last updated:** 2026-11-06 14:55
 
 ## Hardware detected (real, not assumed)
 - OS: Microsoft Windows 11 Home, Version 10.0.26200, 64-bit
@@ -34,10 +34,10 @@
 - Face detection: haarcascade_frontalface_default.xml (~930 KB) at PaeMk2/assets/
 
 ## Model choices (approved)
-- Language brain: Llama-3.2-1B-Instruct-Q4_0.gguf via gpt4all (~737 MB, CPU, offline)
-- Speech-to-text: vosk small English model (~40 MB, to be downloaded) — offline
-- Face detection: OpenCV Haar cascade (built-in, no download)
-- Face embeddings/recognition: OpenCV LBPHFaceRecognizer (built-in, no download)
+- Language brain: Llama-3.2-1B-Instruct-Q4_0.gguf via gpt4all (~737 MB, CPU, offline) — Phase 2
+- Speech-to-text: vosk small English model (~40 MB, to be downloaded) — Phase 3
+- Face detection: OpenCV Haar cascade (built-in, no download) — Phase 4
+- Face embeddings/recognition: OpenCV LBPHFaceRecognizer (built-in, no download) — Phase 5
 - Scene understanding: Deferred (Phase 4) — local VLM too large for CPU-only; mark UNVERIFIED if needed
 - TTS (optional): piper-tts (already installed, behind interface)
 
@@ -45,18 +45,30 @@
 - See DECISIONS.md
 
 ## What works
-- Project structure, venv, git, logging, pytest (2 tests pass)
+- Project structure, venv, git, logging
+- Event bus (pub/sub)
+- Keyboard input loop (stdin, background thread)
+- Trivial echo brain (subscribes to keyboard.input, echoes back)
+- Kill switch (q key + Ctrl+C)
+- pytest: 10 tests pass
 
 ## What is broken
 - Nothing yet
 
 ## Phase 0 gate results (all passed)
 - STATE.md lists real detected hardware: YES
-- git log shows first commit: YES (6b2405b CHG-0001: Phase 0 project setup)
-- Test proves logging writes CHANGELOG.md entry and JSONL line: YES (pytest tests/ -v -> 2 passed)
+- git log shows first commit: YES
+- Test proves logging writes CHANGELOG.md entry and JSONL line: YES
 - Tag: phase-0-complete
 
+## Phase 1 gate results (all passed)
+- pytest passes: YES (10 passed)
+- Manual typed input round-trips: YES (keyboard → event bus → echo brain verified)
+- Kill switch works: YES (q key stops loop; Ctrl+C triggers signal handler)
+- Tag: phase-1-complete
+
 ## Next step
-- Await "continue" to begin Phase 1 — Core + keyboard: event bus, keyboard input loop, trivial echo "brain"
-- Phase 1 gate: pytest passes; manual typed input round-trips; kill switch works
+- Await "continue" to begin Phase 2 — Local brain: LLM interface and working local model answering typed prompts, fully offline
+- Phase 2 gate: --offline run answers 3 scripted prompts; model name/size recorded in STATE.md
+
 
