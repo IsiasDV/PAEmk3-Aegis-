@@ -1,9 +1,10 @@
 """Aegis entry point.
 
-Phase 2: wires together the event bus, config, runtime logging, keyboard
-input loop, echo brain, and the local LLM brain. Supports --offline and a
-hard kill switch (q key / Ctrl+C). With --scripted, runs 3 scripted prompts
-through the LLM and exits (Phase 2 gate).
+Phase 3: wires together the event bus, config, runtime logging, keyboard
+input loop, echo brain, LLM brain, and microphone + STT. Supports --offline
+and a hard kill switch (q key / Ctrl+C). With --scripted, runs 3 scripted
+prompts through the LLM and exits (Phase 2 gate). With --stt, enables
+microphone + speech-to-text in the interactive loop.
 """
 
 from __future__ import annotations
@@ -12,6 +13,7 @@ import argparse
 import os
 import sys
 import time
+from typing import Optional
 
 from brain.llm_interface import LLMInterface
 from brain.prompt_templates import SYSTEM_PROMPT, scripted_prompt
@@ -20,6 +22,7 @@ from core.config import Config
 from core.event_bus import EventBus
 from core.logging_setup import setup_runtime_logging
 from perception.keyboard import KeyboardInput
+from perception.stt import Stt
 
 
 SCRIPTED_PROMPTS = [
@@ -40,6 +43,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--scripted",
         action="store_true",
         help="Run 3 scripted prompts through the LLM and exit (Phase 2 gate)",
+    )
+    parser.add_argument(
+        "--stt",
+        action="store_true",
+        help="Enable microphone + speech-to-text in the interactive loop",
     )
     parser.add_argument(
         "--config",
@@ -78,14 +86,28 @@ def run_scripted(cfg: Config, offline: bool) -> int:
     return 0
 
 
-def run_interactive(cfg: Config) -> int:
-    """Run the interactive keyboard + echo brain loop (Phase 1 behavior)."""
+def run_interactive(cfg: Config, enable_stt: bool) -> int:
+    """Run the interactive keyboard (+ optional STT) + echo brain loop."""
     print("Aegis is running. Press q or Ctrl+C to stop.")
 
     event_bus = EventBus()
     brain = EchoBrain(event_bus)
     kill_switch_key = str(cfg.get("keyboard.kill_switch_key", "q"))
     keyboard = KeyboardInput(event_bus, kill_switch_key=kill_switch_key)
+
+    stt: Optional[Stt] = None
+    if enable_stt:
+        stt_model_path = cfg.get("stt.model_path")
+        if not stt_model_path:
+            print("ERROR: stt.model_path not set in config.yaml (use --stt)")
+            return 1
+        stt = Stt(
+            event_bus,
+            model_path=str(stt_model_path),
+            sample_rate=int(cfg.get("microphone.sample_rate", 16000)),
+            device_index=cfg.get("microphone.device_index"),
+        )
+        print(f"[stt] loading model: {stt.model_path}")
 
     def on_kill_switch() -> None:
         print("\n[main] kill switch engaged — stopping")
@@ -94,6 +116,8 @@ def run_interactive(cfg: Config) -> int:
 
     brain.start()
     keyboard.start()
+    if stt is not None:
+        stt.start()
 
     try:
         while keyboard.running:
@@ -102,6 +126,8 @@ def run_interactive(cfg: Config) -> int:
         pass
     finally:
         keyboard.stop()
+        if stt is not None:
+            stt.stop()
 
     print("Aegis stopped.")
     return 0
@@ -112,7 +138,12 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     logger = setup_runtime_logging()
-    logger.info("Aegis starting (offline=%s, scripted=%s)", args.offline, args.scripted)
+    logger.info(
+        "Aegis starting (offline=%s, scripted=%s, stt=%s)",
+        args.offline,
+        args.scripted,
+        args.stt,
+    )
 
     try:
         cfg = Config.load(args.config)
@@ -125,7 +156,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.scripted:
         return run_scripted(cfg, args.offline)
 
-    return run_interactive(cfg)
+    return run_interactive(cfg, args.stt)
 
 
 if __name__ == "__main__":

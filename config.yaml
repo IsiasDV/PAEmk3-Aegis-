@@ -35,7 +35,7 @@ keyboard:
 # --- STT (Vosk) ---
 stt:
   engine: vosk
-  model_path: null          # set to absolute path of vosk model (downloaded separately)
+  model_path: C:/Users/conta/Documents/DayToDayProjects/Portable Artifical Employee/paeMK1/models/vosk-model-small-en-us-0.15
   sample_rate: 16000
 
 # --- LLM (gpt4all) ---

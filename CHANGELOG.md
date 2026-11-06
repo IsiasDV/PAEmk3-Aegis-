@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## [2026-11-06 15:15] CHG-0006 — Phase 3 microphone + speech-to-text
+- Phase: 3
+- Files: created perception/vad.py, perception/stt.py, tests/test_stt.py, tests/test_hello.wav; modified main.py, brain/planner.py, config.yaml, requirements.txt
+- What & why: Implemented Phase 3 — microphone + offline speech-to-text using vosk. VAD (energy-based) gates recognition. STT publishes stt.transcription events to the event bus; EchoBrain subscribes to both keyboard.input and stt.transcription. main.py gained --stt flag for live mic + STT. Verified: vosk transcribes "hello world" WAV correctly; live mic captures audio successfully.
+- Commands run: pytest tests/ -v; manual live mic capture test; WAV transcription test
+- Verification: 24 tests passed; test_stt_transcribes_hello_world confirms "hello world" transcription; live mic test captured audio (RMS=0.000867)
+- Rollback: git commit 68d4e11
+- Open issues: live mic transcription requires user to speak (not automated); STT model path in config.yaml points to existing vosk-model-small-en-us-0.15 on device
+
 ## [2026-11-06 15:00] CHG-0004 — Phase 2 local brain
 - Phase: 2
 - Files: modified brain/llm_interface.py, brain/prompt_templates.py, main.py, config.yaml, STATE.md; created tests/test_llm_interface.py, tests/test_prompt_templates.py
