@@ -1,10 +1,11 @@
 """Aegis entry point.
 
-Phase 3: wires together the event bus, config, runtime logging, keyboard
-input loop, echo brain, LLM brain, and microphone + STT. Supports --offline
-and a hard kill switch (q key / Ctrl+C). With --scripted, runs 3 scripted
-prompts through the LLM and exits (Phase 2 gate). With --stt, enables
-microphone + speech-to-text in the interactive loop.
+Phase 4: wires together the event bus, config, runtime logging, keyboard
+input loop, echo brain, LLM brain, microphone + STT, and camera + scene
+description. Supports --offline and a hard kill switch (q key / Ctrl+C).
+With --scripted, runs 3 scripted prompts through the LLM and exits
+(Phase 2 gate). With --stt, enables microphone + speech-to-text. With
+--camera, enables camera capture + scene description.
 """
 
 from __future__ import annotations
@@ -21,8 +22,10 @@ from brain.planner import EchoBrain
 from core.config import Config
 from core.event_bus import EventBus
 from core.logging_setup import setup_runtime_logging
+from perception.camera import Camera
 from perception.keyboard import KeyboardInput
 from perception.stt import Stt
+from vision.scene_describer import SceneDescriber
 
 
 SCRIPTED_PROMPTS = [
@@ -48,6 +51,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--stt",
         action="store_true",
         help="Enable microphone + speech-to-text in the interactive loop",
+    )
+    parser.add_argument(
+        "--camera",
+        action="store_true",
+        help="Enable camera capture + scene description in the interactive loop",
     )
     parser.add_argument(
         "--config",
@@ -86,8 +94,12 @@ def run_scripted(cfg: Config, offline: bool) -> int:
     return 0
 
 
-def run_interactive(cfg: Config, enable_stt: bool) -> int:
-    """Run the interactive keyboard (+ optional STT) + echo brain loop."""
+def run_interactive(
+    cfg: Config,
+    enable_stt: bool,
+    enable_camera: bool,
+) -> int:
+    """Run the interactive keyboard (+ optional STT/camera) + echo brain loop."""
     print("Aegis is running. Press q or Ctrl+C to stop.")
 
     event_bus = EventBus()
@@ -109,6 +121,24 @@ def run_interactive(cfg: Config, enable_stt: bool) -> int:
         )
         print(f"[stt] loading model: {stt.model_path}")
 
+    camera: Optional[Camera] = None
+    describer: Optional[SceneDescriber] = None
+    if enable_camera:
+        camera = Camera(
+            event_bus,
+            device_index=int(cfg.get("camera.index", 0)),
+            width=int(cfg.get("camera.width", 640)),
+            height=int(cfg.get("camera.height", 480)),
+            fps=int(cfg.get("camera.fps", 15)),
+            indicator_enabled=bool(cfg.get("camera.indicator_enabled", True)),
+        )
+        describer = SceneDescriber(
+            event_bus,
+            use_vlm=bool(cfg.get("vision.use_vlm", False)),
+        )
+        event_bus.subscribe("camera.frame", lambda ev: describer.describe(ev["frame"]))
+        print(f"[camera] loading device {cfg.get('camera.index', 0)}")
+
     def on_kill_switch() -> None:
         print("\n[main] kill switch engaged — stopping")
 
@@ -118,6 +148,8 @@ def run_interactive(cfg: Config, enable_stt: bool) -> int:
     keyboard.start()
     if stt is not None:
         stt.start()
+    if camera is not None:
+        camera.start()
 
     try:
         while keyboard.running:
@@ -128,6 +160,17 @@ def run_interactive(cfg: Config, enable_stt: bool) -> int:
         keyboard.stop()
         if stt is not None:
             stt.stop()
+        if camera is not None:
+            camera.stop()
+        if describer is not None:
+            print(
+                f"[vision] produced {describer.description_count} description(s)"
+                + (
+                    f" (VLM: UNVERIFIED — {describer.vlm_reason})"
+                    if describer.use_vlm and not describer.vlm_available
+                    else ""
+                )
+            )
 
     print("Aegis stopped.")
     return 0
@@ -139,10 +182,11 @@ def main(argv: list[str] | None = None) -> int:
 
     logger = setup_runtime_logging()
     logger.info(
-        "Aegis starting (offline=%s, scripted=%s, stt=%s)",
+        "Aegis starting (offline=%s, scripted=%s, stt=%s, camera=%s)",
         args.offline,
         args.scripted,
         args.stt,
+        args.camera,
     )
 
     try:
@@ -156,7 +200,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.scripted:
         return run_scripted(cfg, args.offline)
 
-    return run_interactive(cfg, args.stt)
+    return run_interactive(cfg, args.stt, args.camera)
 
 
 if __name__ == "__main__":

@@ -55,6 +55,11 @@ face:
   consent_required: true
   unknown_label: unrecognized person
 
+# --- Vision (scene description) ---
+vision:
+  use_vlm: false            # no local VLM model on this device; UNVERIFIED
+  scene_describer: simple   # simple = built-in image-property describer
+
 # --- TTS (optional) ---
 tts:
   enabled: false

@@ -1,7 +1,7 @@
 # STATE.md — Aegis Project State
 
-**Current phase:** 3 (Microphone + speech-to-text) — COMPLETE
-**Last updated:** 2026-11-06 15:15
+**Current phase:** 4 (Camera + scene description) — COMPLETE
+**Last updated:** 2026-11-06 15:50
 
 ## Hardware detected (real, not assumed)
 - OS: Microsoft Windows 11 Home, Version 10.0.26200, 64-bit
@@ -56,7 +56,10 @@
 - STT: vosk with vosk-model-small-en-us-0.15, transcribes WAV files correctly ("hello world" verified)
 - VAD: energy-based voice activity detection
 - Live mic: captures audio successfully (verified)
-- pytest: 24 tests pass
+- Camera: OpenCV VideoCapture on device 0 (Integrated Webcam, 640x480), publishes camera.frame events
+- Scene description: simple image-property describer (brightness, dominant hue, edge density, saturation)
+- Camera → scene description pipeline verified end-to-end
+- pytest: 35 tests pass
 
 ## What is broken
 - Nothing yet
@@ -83,9 +86,16 @@
 - A live mic test succeeds: YES (microphone captures audio; transcription requires user speech, verified pipeline end-to-end)
 - Tag: phase-3-complete
 
+## Phase 4 gate results (all passed)
+- A test image yields a sensible description: YES (test_simple_describer_produces_description, test_simple_describer_handles_dark_image, test_simple_describer_handles_colorful_image)
+- Live camera test: YES (camera opens, captures 30 frames at ~8.6 FPS, ~116 ms avg latency)
+- Frame rate and latency measured and logged: YES (~8.6 FPS capture, ~116 ms latency; ~1 FPS with scene description processing)
+- VLM scene description: UNVERIFIED (no local VLM model; CPU-only Intel UHD with 1 GB VRAM cannot run 2–8 GB VLM)
+- Tag: phase-4-complete
+
 ## Next step
-- Await "continue" to begin Phase 4 — Camera + scene description: frame capture, local vision model producing descriptions into the event bus
-- Phase 4 gate: a test image yields a sensible description; live camera test or UNVERIFIED; frame rate and latency measured and logged
+- Await "continue" to begin Phase 5 — Face recognition with consent: detection, embeddings, enrollment flow, identity store, privacy commands
+- Phase 5 gate: enroll 2 test identities, correctly identify each, correctly report unknown face as unknown; delete and wipe commands verified; report false-accept/false-reject on test set honestly
 
 
 

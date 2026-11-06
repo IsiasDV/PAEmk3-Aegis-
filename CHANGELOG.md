@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## [2026-11-06 15:45] CHG-0007 — Phase 4 camera + scene description
+- Phase: 4
+- Files: created perception/camera.py, vision/scene_describer.py, tests/test_camera.py, tests/test_scene_describer.py; modified main.py, config.yaml, STATE.md
+- What & why: Implemented Phase 4 — camera capture (OpenCV, rate-limited, publishes camera.frame events) and scene description (simple image-property describer always available; VLM stub marked UNVERIFIED). Camera verified on device 0 (Integrated Webcam, 640x480, ~8.6 FPS capture, ~116 ms latency). Full pipeline (camera → describer) produces descriptions (~1 FPS including OpenCV processing). VLM path is UNVERIFIED: no local VLM model, CPU-only Intel UHD with 1 GB VRAM cannot run a 2–8 GB VLM.
+- Commands run: pytest tests/ -v; manual live camera test
+- Verification: 35 tests passed; test camera publishes frames; scene describer produces sensible descriptions from test images; live camera + describer pipeline verified; frame rate and latency measured and logged
+- Rollback: git commit 684d91a
+- Open issues: VLM scene description is UNVERIFIED (no model, insufficient hardware); camera FPS drops when scene description processing is included
+
 ## [2026-11-06 15:15] CHG-0006 — Phase 3 microphone + speech-to-text
 - Phase: 3
 - Files: created perception/vad.py, perception/stt.py, tests/test_stt.py, tests/test_hello.wav; modified main.py, brain/planner.py, config.yaml, requirements.txt
