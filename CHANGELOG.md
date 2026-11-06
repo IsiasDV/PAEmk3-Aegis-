@@ -1,4 +1,14 @@
 # CHANGELOG
+## [2026-11-06 16:15] CHG-0008 — Phase 5 face recognition with consent
+- Phase: 5
+- Files: created recognition/identity_store.py, recognition/face_detect.py, recognition/face_embed.py, recognition/enrollment.py, recognition/__init__.py; created tests/test_identity_store.py, tests/test_face_detector.py, tests/test_face_embedder.py, tests/test_enrollment.py; modified config.yaml, requirements.txt, DECISIONS.md, STATE.md, main.py
+- What & why: Implemented Phase 5 — face recognition with consent. Identity store (JSON-based, embeddings only, no raw images), Haar cascade face detection, LBPHFaceRecognizer embeddings/recognition, enrollment flow with opt-in consent. Privacy: unenrolled faces reported as "unknown" and never stored; delete/wipe commands supported. Verified: enroll 2 identities, identify each, report unknown as unknown, delete/wipe work, false-accept/false-reject tested via confidence threshold. Live camera face detection at 9.2 FPS.
+- Commands run: pytest tests/ -v; manual live camera face detection test
+- Verification: 21 Phase 5 tests passed; live camera detects faces (9.2 FPS); Haar cascade loads from existing model on device; LBPH trains and recognizes
+- Rollback: git commit 827d7df
+- Open issues: none
+
+
 
 ## [2026-11-06 15:45] CHG-0007 — Phase 4 camera + scene description
 - Phase: 4

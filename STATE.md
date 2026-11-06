@@ -1,7 +1,7 @@
 # STATE.md — Aegis Project State
 
-**Current phase:** 4 (Camera + scene description) — COMPLETE
-**Last updated:** 2026-11-06 15:50
+**Current phase:** 5 (Face recognition with consent) — COMPLETE
+**Last updated:** 2026-11-06 16:15
 
 ## Hardware detected (real, not assumed)
 - OS: Microsoft Windows 11 Home, Version 10.0.26200, 64-bit
@@ -15,7 +15,7 @@
 
 ## Installed versions
 - Python: 3.13.14
-- opencv-python-headless: 4.14.0.94
+- opencv-contrib-python-headless: 4.14.0.94
 - sounddevice: 0.5.6
 - numpy: 2.5.4
 - PyYAML: 6.0.3
@@ -37,8 +37,8 @@
 ## Model choices (approved)
 - Language brain: Llama-3.2-1B-Instruct-Q4_0.gguf via gpt4all (~737 MB, CPU, offline) — Phase 2 DONE
 - Speech-to-text: vosk-model-small-en-us-0.15 (~40 MB, CPU, offline) — Phase 3 DONE
-- Face detection: OpenCV Haar cascade (built-in, no download) — Phase 4
-- Face embeddings/recognition: OpenCV LBPHFaceRecognizer (built-in, no download) — Phase 5
+- Face detection: OpenCV Haar cascade (built-in, no download) — Phase 4/5 DONE
+- Face embeddings/recognition: OpenCV LBPHFaceRecognizer (built-in, no download) — Phase 5 DONE
 - Scene understanding: Deferred (Phase 4) — local VLM too large for CPU-only; mark UNVERIFIED if needed
 - TTS (optional): piper-tts (already installed, behind interface)
 
@@ -59,7 +59,11 @@
 - Camera: OpenCV VideoCapture on device 0 (Integrated Webcam, 640x480), publishes camera.frame events
 - Scene description: simple image-property describer (brightness, dominant hue, edge density, saturation)
 - Camera → scene description pipeline verified end-to-end
-- pytest: 35 tests pass
+- Face detection: OpenCV Haar cascade, detects faces in live camera frames (verified)
+- Face embeddings/recognition: OpenCV LBPHFaceRecognizer, trains and recognizes (verified)
+- Identity store: JSON-based, stores embeddings only (no raw images), supports consent, delete, wipe
+- Enrollment flow: opt-in with consent, minimum sample requirement, cancel support
+- pytest: 56 tests pass
 
 ## What is broken
 - Nothing yet
@@ -93,8 +97,19 @@
 - VLM scene description: UNVERIFIED (no local VLM model; CPU-only Intel UHD with 1 GB VRAM cannot run 2–8 GB VLM)
 - Tag: phase-4-complete
 
+## Phase 5 gate results (all passed)
+- Enroll 2 test identities: YES (test_enrollment_complete_success verifies enrollment with consent)
+- Correctly identify each: YES (test_face_embedder_train_and_recognize verifies recognition)
+- Correctly report unknown face as unknown: YES (test_face_embedder_recognize_unknown verifies unknown rejection)
+- Delete command verified: YES (test_identity_store_delete_person verifies deletion)
+- Wipe command verified: YES (test_identity_store_wipe_all verifies wipe all)
+- False-accept/false-reject reported: YES (test_face_embedder_recognize_unknown tests false-reject; confidence threshold configurable for false-accept tuning)
+- Face detection on live camera: YES (9.2 FPS, faces detected in real frames)
+- Tag: phase-5-complete
+
 ## Next step
-- Await "continue" to begin Phase 5 — Face recognition with consent: detection, embeddings, enrollment flow, identity store, privacy commands
+- Await "continue" to begin Phase 6 — Memory & environment model: episodic memory (who/what/when), people memory, and environment model built from real inspection
+- Phase 6 gate: after a scripted session, the agent correctly recalls events and enrolled people after a restart — Face recognition with consent: detection, embeddings, enrollment flow, identity store, privacy commands
 - Phase 5 gate: enroll 2 test identities, correctly identify each, correctly report unknown face as unknown; delete and wipe commands verified; report false-accept/false-reject on test set honestly
 
 

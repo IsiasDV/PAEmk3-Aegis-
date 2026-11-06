@@ -49,7 +49,7 @@ llm:
 # --- Face detection ---
 face:
   detector: haar_cascade
-  cascade_path: null        # set to absolute path of haarcascade_frontalface_default.xml
+  cascade_path: C:/Users/conta/Documents/DayToDayProjects/PaeMk2/assets/haarcascade_frontalface_default.xml
   recognizer: lbph
   identity_store: memory/identity_store.json
   consent_required: true

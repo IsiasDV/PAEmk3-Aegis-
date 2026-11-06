@@ -1,7 +1,7 @@
 # Aegis dependencies (pinned exact versions)
 # Installed in project-local venv: aegis/.venv
 
-opencv-python-headless==4.14.0.94
+opencv-contrib-python-headless==4.14.0.94
 sounddevice==0.5.6
 numpy==2.5.4
 PyYAML==6.0.3

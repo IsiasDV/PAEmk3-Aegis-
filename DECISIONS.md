@@ -13,12 +13,12 @@
 **Reason:** `vosk` package is already installed; fully offline; small; CPU-friendly. The existing `ggml-base.en.bin` is whisper.cpp format, not directly usable by the vosk Python package.
 
 ## D-0004: Face detection
-**Decision:** Use OpenCV Haar cascade (`haarcascade_frontalface_default.xml`, already on device) via `opencv-python-headless`.
-**Reason:** Already on device, no extra dependency, works offline, CPU-friendly.
+**Decision:** Use OpenCV Haar cascade (`haarcascade_frontalface_default.xml`, already on device) via `opencv-contrib-python-headless`.
+**Reason:** Already on device, no extra dependency, works offline, CPU-friendly. Requires `opencv-contrib-python-headless` for `cv2.CascadeClassifier` (removed from `opencv-python-headless` in v5+).
 
 ## D-0005: Face embeddings/recognition
-**Decision:** Use OpenCV `LBPHFaceRecognizer` (built-in to opencv-python-headless).
-**Reason:** Avoids `dlib`/`insightface` which are difficult to install on Windows + Python 3.13. Stores embeddings only (no raw face images), per privacy rules.
+**Decision:** Use OpenCV `LBPHFaceRecognizer` from `opencv-contrib-python-headless` (`cv2.face` module).
+**Reason:** Avoids `dlib`/`insightface` which are difficult to install on Windows + Python 3.13. Stores embeddings only (no raw face images), per privacy rules. `cv2.face` is only available in the `contrib` package, not the base `headless` package.
 
 ## D-0006: Scene understanding
 **Decision:** Deferred to Phase 4; mark UNVERIFIED if no suitable small local VLM fits hardware.
