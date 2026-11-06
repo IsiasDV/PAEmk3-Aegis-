@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## [2026-11-06 15:00] CHG-0003 — gitignore runtime.log
+- Phase: 1
+- Files: modified .gitignore; removed logs/runtime.log from git tracking
+- What & why: runtime.log is a rotating runtime artifact that changes on every run; it should not be version-controlled. changes.jsonl remains tracked as the append-only change log.
+- Commands run: git rm --cached logs/runtime.log; git commit
+- Verification: git status clean; 10 tests still pass
+- Rollback: git commit 6c5f152
+- Open issues: none
+
 ## [2026-11-06 14:50] CHG-0002 — Phase 1 core + keyboard
 - Phase: 1
 - Files: created perception/keyboard.py, brain/planner.py, brain/llm_interface.py, brain/prompt_templates.py; modified main.py; created tests/test_keyboard.py, tests/test_echo_brain.py, tests/test_kill_switch.py
