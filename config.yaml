@@ -1,0 +1,73 @@
+# Aegis configuration
+# No hard-coded paths or device indices in code; all configurable here.
+
+# --- General ---
+offline: false
+log_level: INFO
+log_dir: logs
+runtime_log: logs/runtime.log
+changes_jsonl: logs/changes.jsonl
+self_mod_jsonl: logs/self_mod.jsonl
+
+# --- Camera ---
+camera:
+  default_index: 0          # Integrated Webcam
+  index: 0                  # overridable at runtime
+  width: 640
+  height: 480
+  fps: 15
+  indicator_enabled: true   # console line when camera active
+
+# --- Microphone ---
+microphone:
+  default_device: null      # null = sounddevice default
+  device_index: null        # overridable at runtime
+  sample_rate: 16000
+  channels: 1
+  blocksize: 8000
+  indicator_enabled: true   # console line when mic active
+
+# --- Keyboard ---
+keyboard:
+  kill_switch_key: q
+  kill_switch_ctrl_c: true
+
+# --- STT (Vosk) ---
+stt:
+  engine: vosk
+  model_path: null          # set to absolute path of vosk model (downloaded separately)
+  sample_rate: 16000
+
+# --- LLM (gpt4all) ---
+llm:
+  engine: gpt4all
+  model_path: null          # set to absolute path of Llama-3.2-1B-Instruct-Q4_0.gguf
+  model_name: Llama-3.2-1B-Instruct-Q4_0.gguf
+  max_tokens: 256
+  temperature: 0.7
+
+# --- Face detection ---
+face:
+  detector: haar_cascade
+  cascade_path: null        # set to absolute path of haarcascade_frontalface_default.xml
+  recognizer: lbph
+  identity_store: memory/identity_store.json
+  consent_required: true
+  unknown_label: unrecognized person
+
+# --- TTS (optional) ---
+tts:
+  enabled: false
+  engine: piper
+  voice: null
+
+# --- Self-modification ---
+selfmod:
+  agent_workspace: agent_workspace
+  protected_paths:
+    - selfmod/
+    - tools/registry.py
+    - core/logging_setup.py
+    - config.yaml (safety keys)
+  allowed_write_paths:
+    - agent_workspace/
