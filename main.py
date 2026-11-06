@@ -1,8 +1,9 @@
 """Aegis entry point.
 
-Phase 1: wires together the event bus, config, runtime logging, keyboard
-input loop, and the trivial echo brain. Supports --offline and a hard kill
-switch (q key / Ctrl+C).
+Phase 2: wires together the event bus, config, runtime logging, keyboard
+input loop, echo brain, and the local LLM brain. Supports --offline and a
+hard kill switch (q key / Ctrl+C). With --scripted, runs 3 scripted prompts
+through the LLM and exits (Phase 2 gate).
 """
 
 from __future__ import annotations
@@ -12,11 +13,20 @@ import os
 import sys
 import time
 
+from brain.llm_interface import LLMInterface
+from brain.prompt_templates import SYSTEM_PROMPT, scripted_prompt
+from brain.planner import EchoBrain
 from core.config import Config
 from core.event_bus import EventBus
 from core.logging_setup import setup_runtime_logging
-from brain.planner import EchoBrain
 from perception.keyboard import KeyboardInput
+
+
+SCRIPTED_PROMPTS = [
+    "What are you?",
+    "Describe what you can do right now.",
+    "Say hello in one sentence.",
+]
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -27,6 +37,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Enforce fully offline operation (no network at runtime)",
     )
     parser.add_argument(
+        "--scripted",
+        action="store_true",
+        help="Run 3 scripted prompts through the LLM and exit (Phase 2 gate)",
+    )
+    parser.add_argument(
         "--config",
         default="config.yaml",
         help="Path to config.yaml",
@@ -34,20 +49,37 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main(argv: list[str] | None = None) -> int:
-    parser = build_parser()
-    args = parser.parse_args(argv)
+def run_scripted(cfg: Config, offline: bool) -> int:
+    """Run 3 scripted prompts through the local LLM and print responses."""
+    if offline:
+        print("[offline] enforced — no network access")
 
-    logger = setup_runtime_logging()
-    logger.info("Aegis starting (offline=%s)", args.offline)
-
-    try:
-        cfg = Config.load(args.config)
-    except FileNotFoundError as exc:
-        logger.error("Configuration not found: %s", exc)
+    model_path = cfg.get("llm.model_path")
+    if not model_path:
+        print("ERROR: llm.model_path not set in config.yaml")
         return 1
 
-    logger.info("Config loaded from %s", os.path.abspath(args.config))
+    llm = LLMInterface(
+        model_path=str(model_path),
+        max_tokens=int(cfg.get("llm.max_tokens", 256)),
+        temperature=float(cfg.get("llm.temperature", 0.7)),
+    )
+    print(f"[brain] loading model: {llm.model_name} ({llm.model_size_mb:.1f} MB)")
+    llm.load()
+
+    print(f"[brain] system: {SYSTEM_PROMPT[:80]}...\n")
+    for i, prompt_text in enumerate(SCRIPTED_PROMPTS, 1):
+        full_prompt = scripted_prompt(i, prompt_text)
+        response = llm.generate(full_prompt)
+        print(f"--- Prompt {i}: {prompt_text}")
+        print(f"Response: {response.strip()}\n")
+
+    print("[brain] scripted run complete — model answered 3 scripted prompts")
+    return 0
+
+
+def run_interactive(cfg: Config) -> int:
+    """Run the interactive keyboard + echo brain loop (Phase 1 behavior)."""
     print("Aegis is running. Press q or Ctrl+C to stop.")
 
     event_bus = EventBus()
@@ -70,10 +102,30 @@ def main(argv: list[str] | None = None) -> int:
         pass
     finally:
         keyboard.stop()
-        logger.info("Aegis stopped")
 
     print("Aegis stopped.")
     return 0
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(argv)
+
+    logger = setup_runtime_logging()
+    logger.info("Aegis starting (offline=%s, scripted=%s)", args.offline, args.scripted)
+
+    try:
+        cfg = Config.load(args.config)
+    except FileNotFoundError as exc:
+        logger.error("Configuration not found: %s", exc)
+        return 1
+
+    logger.info("Config loaded from %s", os.path.abspath(args.config))
+
+    if args.scripted:
+        return run_scripted(cfg, args.offline)
+
+    return run_interactive(cfg)
 
 
 if __name__ == "__main__":

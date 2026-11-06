@@ -1,7 +1,7 @@
 # STATE.md — Aegis Project State
 
-**Current phase:** 1 (Core + keyboard) — COMPLETE
-**Last updated:** 2026-11-06 14:55
+**Current phase:** 2 (Local brain) — COMPLETE
+**Last updated:** 2026-11-06 15:05
 
 ## Hardware detected (real, not assumed)
 - OS: Microsoft Windows 11 Home, Version 10.0.26200, 64-bit
@@ -21,7 +21,7 @@
 - PyYAML: 6.0.3
 - onnxruntime: 1.31.0
 - pillow: 12.3.0
-- gpt4all: 2.8.2
+- gpt4all: 2.8.2 (installed in .venv)
 - vosk: 0.3.45
 - piper-tts: 1.8.0
 - pyttsx3: 2.99
@@ -34,7 +34,7 @@
 - Face detection: haarcascade_frontalface_default.xml (~930 KB) at PaeMk2/assets/
 
 ## Model choices (approved)
-- Language brain: Llama-3.2-1B-Instruct-Q4_0.gguf via gpt4all (~737 MB, CPU, offline) — Phase 2
+- Language brain: Llama-3.2-1B-Instruct-Q4_0.gguf via gpt4all (~737 MB, CPU, offline) — Phase 2 DONE
 - Speech-to-text: vosk small English model (~40 MB, to be downloaded) — Phase 3
 - Face detection: OpenCV Haar cascade (built-in, no download) — Phase 4
 - Face embeddings/recognition: OpenCV LBPHFaceRecognizer (built-in, no download) — Phase 5
@@ -50,7 +50,9 @@
 - Keyboard input loop (stdin, background thread)
 - Trivial echo brain (subscribes to keyboard.input, echoes back)
 - Kill switch (q key + Ctrl+C)
-- pytest: 10 tests pass
+- LLM interface: gpt4all with Llama-3.2-1B-Instruct-Q4_0.gguf (737.2 MB, CPU, offline)
+- --offline --scripted: model answers 3 scripted prompts (verified)
+- pytest: 17 tests pass
 
 ## What is broken
 - Nothing yet
@@ -67,8 +69,14 @@
 - Kill switch works: YES (q key stops loop; Ctrl+C triggers signal handler)
 - Tag: phase-1-complete
 
+## Phase 2 gate results (all passed)
+- --offline run answers 3 scripted prompts: YES (verified — model loads in ~2s, generates responses in ~8-12s each on CPU)
+- Model name/size recorded in STATE.md: YES (Llama-3.2-1B-Instruct-Q4_0.gguf, 737.2 MB)
+- Tag: phase-2-complete
+
 ## Next step
-- Await "continue" to begin Phase 2 — Local brain: LLM interface and working local model answering typed prompts, fully offline
-- Phase 2 gate: --offline run answers 3 scripted prompts; model name/size recorded in STATE.md
+- Await "continue" to begin Phase 3 — Microphone + speech-to-text: capture, VAD, local transcription feeding the brain
+- Phase 3 gate: a recorded test WAV transcribes correctly in tests; a live mic test succeeds, or is marked UNVERIFIED with the reason
+
 
 

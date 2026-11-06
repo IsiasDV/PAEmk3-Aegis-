@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## [2026-11-06 15:00] CHG-0004 — Phase 2 local brain
+- Phase: 2
+- Files: modified brain/llm_interface.py, brain/prompt_templates.py, main.py, config.yaml, STATE.md; created tests/test_llm_interface.py, tests/test_prompt_templates.py
+- What & why: Implemented Phase 2 — real LLM interface backed by gpt4all with Llama-3.2-1B-Instruct-Q4_0.gguf (737.2 MB, CPU, offline). Added --scripted flag to main.py for the Phase 2 gate. Model runs fully offline (allow_download=False). Prompt templates (system prompt, user prompt wrapper, scripted prompt formatter) added.
+- Commands run: pytest tests/ -v; main.py --offline --scripted
+- Verification: 17 tests passed; model loads in ~2s; all 3 scripted prompts answered (verified: "What are you?", "Describe what you can do right now?", "Say hello in one sentence."); --offline enforced via allow_download=False
+- Rollback: git commit a755e6c
+- Open issues: main.py --scripted at max_tokens=256 takes ~38s (>30s tool timeout); verified with max_tokens=64 (~25s)
+
 ## [2026-11-06 15:00] CHG-0003 — gitignore runtime.log
 - Phase: 1
 - Files: modified .gitignore; removed logs/runtime.log from git tracking
