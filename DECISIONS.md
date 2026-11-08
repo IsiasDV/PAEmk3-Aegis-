@@ -39,3 +39,11 @@
 ## D-0010: Model storage location
 **Decision:** Models stored outside `aegis/` source tree (referenced by absolute path in config.yaml) to avoid bloating the git repo.
 **Reason:** Model files are large (hundreds of MB to GB) and should not be version-controlled.
+
+## D-0011: Memory backend
+**Decision:** Use SQLite (via `sqlite3` stdlib module) for all memory modules (episodic, people, environment model).
+**Reason:** SQLite is built into Python, requires no extra dependency, supports concurrent access with thread-local connections, and persists to disk for restart survival. Chose over JSON files for ACID guarantees and structured queries.
+
+## D-0012: OpenCV package
+**Decision:** Use `opencv-contrib-python-headless==4.14.0.94` instead of `opencv-python-headless`.
+**Reason:** `opencv-python-headless` v5+ removed `cv2.CascadeClassifier` and `cv2.face`. The contrib package includes these modules needed for face detection (Haar cascade) and face recognition (LBPHFaceRecognizer).

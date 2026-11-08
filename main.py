@@ -17,11 +17,15 @@ import time
 from typing import Optional
 
 from brain.llm_interface import LLMInterface
-from brain.prompt_templates import SYSTEM_PROMPT, scripted_prompt
 from brain.planner import EchoBrain
+from brain.prompt_templates import SYSTEM_PROMPT, scripted_prompt
+from brain.memory_brain import MemoryBrain
 from core.config import Config
 from core.event_bus import EventBus
 from core.logging_setup import setup_runtime_logging
+from memory.db import MemoryDB
+from memory.episodic import EpisodicMemory
+from memory.people import PeopleMemory
 from perception.camera import Camera
 from perception.keyboard import KeyboardInput
 from perception.stt import Stt
@@ -99,11 +103,44 @@ def run_interactive(
     enable_stt: bool,
     enable_camera: bool,
 ) -> int:
-    """Run the interactive keyboard (+ optional STT/camera) + echo brain loop."""
+    """Run the interactive keyboard (+ optional STT/camera) + memory brain loop.
+
+    The interactive loop is the Phase 6 integration point: all perception
+    events (keyboard input, STT transcription, camera frames, scene
+    descriptions) are recorded into an on-disk SQLite episodic memory, and
+    a MemoryBrain answers recall queries from those episodes after a
+    restart.
+    """
     print("Aegis is running. Press q or Ctrl+C to stop.")
 
     event_bus = EventBus()
-    brain = EchoBrain(event_bus)
+
+    # --- Memory (Phase 6) ---
+    memory_db = MemoryDB(os.path.join(os.path.dirname(__file__), "logs", "memory.db"))
+    episodic = EpisodicMemory(memory_db)
+    people = PeopleMemory(memory_db)
+    memory_brain = MemoryBrain(
+        event_bus=event_bus,
+        db_path=memory_db.db_path,
+    )
+    # Episodic memory records events as they arrive
+    event_bus.subscribe("keyboard.input", lambda ev: episodic.record(
+        event_type=ev.get("event_type", "keyboard.input"),
+        description=ev.get("text", ""),
+        actor=ev.get("source", "user"),
+    ))
+    event_bus.subscribe("stt.transcription", lambda ev: episodic.record(
+        event_type="stt.transcription",
+        description=ev.get("text", ""),
+        actor=ev.get("source", "user"),
+    ))
+    event_bus.subscribe("vision.scene_description", lambda ev: episodic.record(
+        event_type="vision.scene_description",
+        description=ev.get("description", ""),
+        actor="system",
+        metadata={"frame_size": ev.get("frame_size")},
+    ))
+
     kill_switch_key = str(cfg.get("keyboard.kill_switch_key", "q"))
     keyboard = KeyboardInput(event_bus, kill_switch_key=kill_switch_key)
 
@@ -144,7 +181,7 @@ def run_interactive(
 
     keyboard.register_kill_callback(on_kill_switch)
 
-    brain.start()
+    memory_brain.start()
     keyboard.start()
     if stt is not None:
         stt.start()
@@ -172,6 +209,9 @@ def run_interactive(
                 )
             )
 
+    # Flush memory and report.
+    memory_db.commit()
+    memory_db.close()
     print("Aegis stopped.")
     return 0
 

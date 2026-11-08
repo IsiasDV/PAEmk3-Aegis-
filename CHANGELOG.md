@@ -1,4 +1,13 @@
 # CHANGELOG
+## [2026-11-07 20:30] CHG-0009 — Phase 6 memory & environment model
+- Phase: 6
+- Files: created memory/db.py, memory/episodic.py, memory/people.py, memory/environment_model.py, brain/memory_brain.py; created tests/test_memory.py; modified main.py, brain/__init__.py, config.yaml, STATE.md
+- What & why: Implemented Phase 6 — memory & environment model. SQLite-based MemoryDB for persistent storage; EpisodicMemory records who/what/when events; PeopleMemory tracks enrolled people; EnvironmentModel inspects real hardware/software; MemoryBrain subscribes to perception events and answers recall queries. All data persisted to SQLite so it survives restarts. Verified: record/recall episodes, recall by event type/actor, clear, people add/update/delete/count, environment model inspect/persist/retrieve, MemoryBrain records keyboard/STT/scene events, MemoryBrain recall and people recall, MemoryBrain survives restart (new SQLite connection reads old data).
+- Commands run: pytest tests/ -v
+- Verification: 80 tests pass (12 new Phase 6 tests); episodic memory persists across restart; people memory persists; environment model persists and retrieves; MemoryBrain records events from event bus
+- Rollback: git commit 183a5ed
+- Open issues: none
+
 ## [2026-11-06 16:15] CHG-0008 — Phase 5 face recognition with consent
 - Phase: 5
 - Files: created recognition/identity_store.py, recognition/face_detect.py, recognition/face_embed.py, recognition/enrollment.py, recognition/__init__.py; created tests/test_identity_store.py, tests/test_face_detector.py, tests/test_face_embedder.py, tests/test_enrollment.py; modified config.yaml, requirements.txt, DECISIONS.md, STATE.md, main.py

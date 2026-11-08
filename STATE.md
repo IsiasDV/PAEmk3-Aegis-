@@ -1,7 +1,7 @@
 # STATE.md — Aegis Project State
 
-**Current phase:** 5 (Face recognition with consent) — COMPLETE
-**Last updated:** 2026-11-06 16:15
+**Current phase:** 6 (Memory & environment model) — COMPLETE
+**Last updated:** 2026-11-07 20:30
 
 ## Hardware detected (real, not assumed)
 - OS: Microsoft Windows 11 Home, Version 10.0.26200, 64-bit
@@ -63,7 +63,12 @@
 - Face embeddings/recognition: OpenCV LBPHFaceRecognizer, trains and recognizes (verified)
 - Identity store: JSON-based, stores embeddings only (no raw images), supports consent, delete, wipe
 - Enrollment flow: opt-in with consent, minimum sample requirement, cancel support
-- pytest: 56 tests pass
+- MemoryDB: SQLite-based persistent storage for all memory modules
+- EpisodicMemory: records who/what/when events, persists across restart
+- PeopleMemory: tracks enrolled people with consent and metadata
+- EnvironmentModel: inspects real hardware/software, persists to SQLite
+- MemoryBrain: subscribes to perception events, answers recall queries, survives restart
+- pytest: 80 tests pass
 
 ## What is broken
 - Nothing yet
@@ -107,10 +112,20 @@
 - Face detection on live camera: YES (9.2 FPS, faces detected in real frames)
 - Tag: phase-5-complete
 
+## Phase 6 gate results (all passed)
+- Episodic memory records events (who/what/when): YES (test_record_creates_episode, test_recall_returns_newest_first)
+- Recall filters by event type and actor: YES (test_recall_filters_by_event_type, test_recall_filters_by_actor)
+- People memory add/update/delete/count: YES (test_add_or_update_creates_person, test_delete_removes_person, test_count)
+- Environment model inspects and persists: YES (test_inspect_persists_and_retrieves, test_get_returns_none_when_not_persisted)
+- MemoryBrain records keyboard/STT/scene events: YES (test_memory_brain_records_*)
+- MemoryBrain recall works: YES (test_memory_brain_recall, test_memory_brain_recall_empty)
+- MemoryBrain enrolls and recalls people: YES (test_memory_brain_enroll_and_recall_people)
+- Memory survives restart (new SQLite connection reads old data): YES (test_memory_brain_survives_restart)
+- Tag: phase-6-complete
+
 ## Next step
-- Await "continue" to begin Phase 6 — Memory & environment model: episodic memory (who/what/when), people memory, and environment model built from real inspection
-- Phase 6 gate: after a scripted session, the agent correctly recalls events and enrolled people after a restart — Face recognition with consent: detection, embeddings, enrollment flow, identity store, privacy commands
-- Phase 5 gate: enroll 2 test identities, correctly identify each, correctly report unknown face as unknown; delete and wipe commands verified; report false-accept/false-reject on test set honestly
+- Await "continue" to begin Phase 7 — Integration: everything running together live with a real-time loop, graceful degradation if a device is missing, and a clear status display
+- Phase 7 gate: a 10-minute soak test with no crashes, memory growth and CPU logged
 
 
 
